@@ -57,7 +57,7 @@ def create_custom_quote(payload: CustomCreateRequest, db: Session = Depends(get_
         "item_personalizado_id": item.id,
         "nombre_personalizado": payload.nombre_personalizado,
         "fecha_creacion": now,
-        "moneda": "CLP",
+        "moneda": "COP",
         "cotizacion_min": cot_min,
         "cotizacion_max": cot_max,
         "desglose": desglose_dict,

@@ -61,7 +61,7 @@ class CustomCreateResponse(BaseModel):
     id: int
     nombre_personalizado: str
     fecha_creacion: datetime
-    moneda: str = "CLP"
+    moneda: str = "COP"
     cotizacion_rango: CotizacionRango
     desglose: Desglose
     tiempo_entrega_dias: int
