@@ -6,7 +6,7 @@ from app.db.base import Base
 class ItemPersonalizado(Base):
     __tablename__ = "item_personalizado"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(String, primary_key=True, index=True)
     cliente_id = Column(Integer, ForeignKey("cliente.id", ondelete="SET NULL"))
     modelo_catalogo_id = Column(Integer, ForeignKey("modelo_catalogo.id", ondelete="SET NULL"))
     nombre_personalizado = Column(String, nullable=False)

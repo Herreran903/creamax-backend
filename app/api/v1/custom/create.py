@@ -10,7 +10,7 @@ from app.crud.cotizacion import create_cotizacion
 from app.services.cotizacion_service import estimate_price_from_params
 from app.models.modelo_catalogo import ModeloCatalogo
 
-router = APIRouter(prefix="/api/v1/custom", tags=["custom"])
+router = APIRouter()
 
 @router.post("/create", response_model=CustomCreateResponse, status_code=status.HTTP_201_CREATED)
 def create_custom_quote(payload: CustomCreateRequest, db: Session = Depends(get_db)):
@@ -45,10 +45,10 @@ def create_custom_quote(payload: CustomCreateRequest, db: Session = Depends(get_
     parametros_json = payload.parametros.dict()
     item = create_item_personalizado(
         db=db,
-        cliente_id=None,  # el MVP no necesita cliente persistente; si se requiere, pasar usuario_id
+        cliente_id=None,  
         modelo_catalogo_id=modelo_catalogo_id,
         nombre_personalizado=payload.nombre_personalizado,
-        parametros=parametros_json,
+        parametros=payload.parametros.dict(),
         color=payload.parametros.color,
         logo_url=None
     )
@@ -67,9 +67,9 @@ def create_custom_quote(payload: CustomCreateRequest, db: Session = Depends(get_
     }
 
     cotizacion_db = create_cotizacion(db=db, cotizacion=cotizacion_data)
-    # 6) armar response (usando los datos recién guardados)
-    response = {
-        "id": cotizacion_db.id, # Usar el ID de la Cotización o del Item (depende de tu preferencia)
+
+    return {
+        "id": cotizacion_db.id,
         "nombre_personalizado": item.nombre_personalizado,
         "fecha_creacion": cotizacion_db.fecha_creacion,
         "moneda": cotizacion_db.moneda,
@@ -79,4 +79,3 @@ def create_custom_quote(payload: CustomCreateRequest, db: Session = Depends(get_
         "valida_hasta": cotizacion_db.valida_hasta,
         "notas": cotizacion_db.notas
     }
-    return response

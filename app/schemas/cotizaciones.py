@@ -3,7 +3,7 @@ from typing import Optional
 
 class CotizacionListado(BaseModel):
     id: int
-    item_personalizado_id: int
+    item_personalizado_id: str
     nombre_personalizado: str
     cantidad: int
     cotizacion_rango: str

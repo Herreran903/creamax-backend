@@ -23,7 +23,7 @@ class ConfirmationRequest(BaseModel):
 class ConfirmationResponse(BaseModel):
     pedido_id: int
     cotizacion_id: int
-    item_personalizado_id: int
+    item_personalizado_id: str
     cantidad: int
     estado: str
     fecha_pedido: datetime

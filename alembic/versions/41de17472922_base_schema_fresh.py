@@ -1,8 +1,8 @@
-"""Add Creamax models
+"""Base schema fresh
 
-Revision ID: d4959947c727
-Revises: b4c33800dc5a
-Create Date: 2025-11-06 10:28:17.451068
+Revision ID: 41de17472922
+Revises: 
+Create Date: 2025-11-08 16:48:09.641977
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'd4959947c727'
-down_revision: Union[str, Sequence[str], None] = 'b4c33800dc5a'
+revision: str = '41de17472922'
+down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -32,23 +32,54 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_cliente_id'), 'cliente', ['id'], unique=False)
-    op.create_table('item_personalizado',
+    op.create_table('modelo_catalogo',
     sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('nombre', sa.String(), nullable=False),
+    sa.Column('descripcion', sa.String(), nullable=True),
+    sa.Column('precio_base', sa.Float(), nullable=False),
+    sa.Column('archivo_id', sa.String(), nullable=True),
+    sa.Column('url', sa.String(), nullable=True),
+    sa.Column('svg', sa.Text(), nullable=True),
+    sa.Column('textura_imagen_id', sa.String(), nullable=True),
+    sa.Column('parametros_generacion_ai', sa.JSON(), nullable=True),
+    sa.Column('thumbnail_url', sa.String(), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_modelo_catalogo_id'), 'modelo_catalogo', ['id'], unique=False)
+    op.create_table('item_personalizado',
+    sa.Column('id', sa.String(), nullable=False),
     sa.Column('cliente_id', sa.Integer(), nullable=True),
     sa.Column('modelo_catalogo_id', sa.Integer(), nullable=True),
     sa.Column('nombre_personalizado', sa.String(), nullable=False),
     sa.Column('color', sa.String(), nullable=True),
     sa.Column('logo_url', sa.String(), nullable=True),
-    sa.Column('parametros_diseno', sa.JSON(), nullable=True),
+    sa.Column('parametros', sa.JSON(), nullable=True),
     sa.Column('fecha_creacion', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['cliente_id'], ['cliente.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['modelo_catalogo_id'], ['modelo_catalogo.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_item_personalizado_id'), 'item_personalizado', ['id'], unique=False)
+    op.create_table('cotizacion',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('item_personalizado_id', sa.String(), nullable=False),
+    sa.Column('nombre_personalizado', sa.String(), nullable=False),
+    sa.Column('fecha_creacion', sa.DateTime(), nullable=False),
+    sa.Column('moneda', sa.String(length=5), nullable=False),
+    sa.Column('cotizacion_min', sa.Float(), nullable=False),
+    sa.Column('cotizacion_max', sa.Float(), nullable=False),
+    sa.Column('desglose', sa.JSON(), nullable=False),
+    sa.Column('tiempo_entrega_dias', sa.Integer(), nullable=False),
+    sa.Column('valida_hasta', sa.DateTime(), nullable=False),
+    sa.Column('notas', sa.String(), nullable=True),
+    sa.ForeignKeyConstraint(['item_personalizado_id'], ['item_personalizado.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('item_personalizado_id')
+    )
+    op.create_index(op.f('ix_cotizacion_id'), 'cotizacion', ['id'], unique=False)
     op.create_table('nfc_enlace',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('item_personalizado_id', sa.Integer(), nullable=True),
+    sa.Column('item_personalizado_id', sa.String(), nullable=True),
     sa.Column('short_code', sa.String(), nullable=False),
     sa.Column('url_destino_actual', sa.String(), nullable=False),
     sa.Column('fecha_actualizacion', sa.DateTime(), nullable=True),
@@ -57,23 +88,6 @@ def upgrade() -> None:
     sa.UniqueConstraint('short_code')
     )
     op.create_index(op.f('ix_nfc_enlace_id'), 'nfc_enlace', ['id'], unique=False)
-    op.create_table('pedido',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('cliente_id', sa.Integer(), nullable=True),
-    sa.Column('item_personalizado_id', sa.Integer(), nullable=True),
-    sa.Column('cantidad', sa.Integer(), nullable=False),
-    sa.Column('cotizacion_min', sa.Numeric(precision=10, scale=2), nullable=True),
-    sa.Column('cotizacion_max', sa.Numeric(precision=10, scale=2), nullable=True),
-    sa.Column('precio_final', sa.Numeric(precision=10, scale=2), nullable=True),
-    sa.Column('precio_total', sa.Numeric(precision=12, scale=2), nullable=True),
-    sa.Column('estado', sa.String(), nullable=False),
-    sa.Column('fecha_pedido', sa.DateTime(), nullable=True),
-    sa.Column('mensaje', sa.Text(), nullable=True),
-    sa.ForeignKeyConstraint(['cliente_id'], ['cliente.id'], ondelete='SET NULL'),
-    sa.ForeignKeyConstraint(['item_personalizado_id'], ['item_personalizado.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_pedido_id'), 'pedido', ['id'], unique=False)
     op.create_table('nfc_visita',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('nfc_enlace_id', sa.Integer(), nullable=True),
@@ -84,22 +98,41 @@ def upgrade() -> None:
     sa.UniqueConstraint('nfc_enlace_id', 'fecha_conteo', name='uq_nfc_enlace_fecha')
     )
     op.create_index(op.f('ix_nfc_visita_id'), 'nfc_visita', ['id'], unique=False)
-    op.add_column('modelo_catalogo', sa.Column('source_url', sa.String(), nullable=True))
+    op.create_table('pedido',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('cliente_id', sa.Integer(), nullable=True),
+    sa.Column('cotizacion_id', sa.Integer(), nullable=False),
+    sa.Column('cantidad', sa.Integer(), nullable=False),
+    sa.Column('cotizacion_min', sa.Numeric(precision=10, scale=2), nullable=True),
+    sa.Column('cotizacion_max', sa.Numeric(precision=10, scale=2), nullable=True),
+    sa.Column('precio_final', sa.Numeric(precision=10, scale=2), nullable=True),
+    sa.Column('precio_total', sa.Numeric(precision=12, scale=2), nullable=True),
+    sa.Column('estado', sa.String(), nullable=False),
+    sa.Column('fecha_pedido', sa.DateTime(), nullable=True),
+    sa.Column('mensaje', sa.Text(), nullable=True),
+    sa.ForeignKeyConstraint(['cliente_id'], ['cliente.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['cotizacion_id'], ['cotizacion.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_pedido_id'), 'pedido', ['id'], unique=False)
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_column('modelo_catalogo', 'source_url')
-    op.drop_index(op.f('ix_nfc_visita_id'), table_name='nfc_visita')
-    op.drop_table('nfc_visita')
     op.drop_index(op.f('ix_pedido_id'), table_name='pedido')
     op.drop_table('pedido')
+    op.drop_index(op.f('ix_nfc_visita_id'), table_name='nfc_visita')
+    op.drop_table('nfc_visita')
     op.drop_index(op.f('ix_nfc_enlace_id'), table_name='nfc_enlace')
     op.drop_table('nfc_enlace')
+    op.drop_index(op.f('ix_cotizacion_id'), table_name='cotizacion')
+    op.drop_table('cotizacion')
     op.drop_index(op.f('ix_item_personalizado_id'), table_name='item_personalizado')
     op.drop_table('item_personalizado')
+    op.drop_index(op.f('ix_modelo_catalogo_id'), table_name='modelo_catalogo')
+    op.drop_table('modelo_catalogo')
     op.drop_index(op.f('ix_cliente_id'), table_name='cliente')
     op.drop_table('cliente')
     # ### end Alembic commands ###
