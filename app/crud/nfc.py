@@ -18,9 +18,11 @@ def create_nfc_enlace(db: Session, item_personalizado_id: str, url_destino: str)
     db.refresh(nfc_enlace)
     return nfc_enlace
 
-
 def get_nfc_by_item_id(db: Session, item_id: str):
     return db.query(NfcEnlace).filter(NfcEnlace.item_personalizado_id == item_id).first()
+
+def get_nfc_by_short_code(db: Session, short_code: str):
+    return db.query(NfcEnlace).filter(NfcEnlace.short_code == short_code).first()
 
 
 def update_nfc_url(db: Session, nfc: NfcEnlace, new_url: str):
