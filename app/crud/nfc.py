@@ -45,3 +45,24 @@ def get_click_stats(db: Session, nfc_id: int):
     )
 
     return [{"dia": r.fecha_conteo, "clicks": r.conteo} for r in registros]
+
+
+def register_visit(db: Session, nfc_enlace_id: int):
+    """Registra una visita para el enlace NFC: incrementa el conteo del día actual o crea el registro."""
+    today = date.today()
+    visita = (
+        db.query(NfcVisita)
+        .filter(NfcVisita.nfc_enlace_id == nfc_enlace_id)
+        .filter(NfcVisita.fecha_conteo == today)
+        .first()
+    )
+
+    if visita:
+        visita.conteo = (visita.conteo or 0) + 1
+    else:
+        visita = NfcVisita(nfc_enlace_id=nfc_enlace_id, fecha_conteo=today, conteo=1)
+        db.add(visita)
+
+    db.commit()
+    db.refresh(visita)
+    return visita
