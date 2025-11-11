@@ -22,16 +22,16 @@ def create_custom_quote(payload: CustomCreateRequest, db: Session = Depends(get_
     # 2) buscar precio base del modelo en catálogo si provisto y si modelo_id es int/str que mapea
     modelo_precio_base = None
     modelo_catalogo_id = None
+
     try:
         # si viene modelo.modelo_id que represente el id numérico en catálogo
         if payload.modelo and payload.modelo.modelo_id:
             # intento convertir a int y buscar
             try:
-                mid = int(payload.modelo.modelo_id)
-                modelo = db.query(ModeloCatalogo).filter(ModeloCatalogo.id == mid).first()
-                if modelo:
-                    modelo_precio_base = float(modelo.precio_base or 0)
-                    modelo_catalogo_id = modelo.id
+                #modelo = db.query(ModeloCatalogo).filter(ModeloCatalogo.id == mid).first()
+                #if modelo:
+                modelo_precio_base = payload.modelo.precio_base
+                modelo_catalogo_id = payload.modelo.modelo_id
             except ValueError:
                 # no es entero: salto (puede ser identificador externo)
                 pass
@@ -47,7 +47,7 @@ def create_custom_quote(payload: CustomCreateRequest, db: Session = Depends(get_
     item = create_item_personalizado(
         db=db,
         cliente_id=None,  
-        modelo_catalogo_id=modelo_catalogo_id,
+        modelo_catalogo_id=None,
         nombre_personalizado=payload.nombre_personalizado,
         parametros=payload.parametros.dict(),
         color=payload.parametros.color,

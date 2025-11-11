@@ -18,6 +18,7 @@ class ModeloCreate(BaseModel):
     textura_imagen: Optional[str] = None 
     parametros_generacion_ai: Optional[AIParams] = None
     thumbnail_url: Optional[HttpUrl] = None
+    precio_base: Optional[float] = None
 
 class ParametrosCreate(BaseModel):
     color: Optional[List[str]] = None 
