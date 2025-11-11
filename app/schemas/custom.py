@@ -25,14 +25,8 @@ class ParametrosCreate(BaseModel):
     ancho: Optional[float] = None
     profundidad: Optional[float] = None
     uv_map: Optional[Dict[str, Any]] = None
-    material: Optional[str] = None
-    acabado: Optional[str] = None
-    dimension_unidad: Optional[str] = None
-    escala: Optional[float] = None
-    cantidad: Optional[int] = 1
-    complejidad_estimacion: Optional[str] = None
-    tolerancia: Optional[str] = None
-    espesor_minimo: Optional[float] = None
+    include_nfc: Optional[bool] = None
+    nfc_url: Optional[str] = None
 
 class Metadatos(BaseModel):
     app_version: Optional[str] = None

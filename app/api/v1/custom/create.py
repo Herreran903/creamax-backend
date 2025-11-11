@@ -7,6 +7,7 @@ from app.schemas.custom import CustomCreateRequest, CustomCreateResponse, Cotiza
 from app.db.session import get_db
 from app.crud.item_personalizado import create_item_personalizado
 from app.crud.cotizacion import create_cotizacion
+from app.crud.nfc import create_nfc_enlace
 from app.services.cotizacion_service import estimate_price_from_params
 from app.models.modelo_catalogo import ModeloCatalogo
 
@@ -67,6 +68,14 @@ def create_custom_quote(payload: CustomCreateRequest, db: Session = Depends(get_
     }
 
     cotizacion_db = create_cotizacion(db=db, cotizacion=cotizacion_data)
+
+    # 5) Crear registro NFC si include_nfc es True
+    if payload.parametros.include_nfc and payload.parametros.nfc_url:
+        create_nfc_enlace(
+            db=db,
+            item_personalizado_id=item.id,
+            url_destino=payload.parametros.nfc_url
+        )
 
     return {
         "id": cotizacion_db.id,

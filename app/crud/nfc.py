@@ -3,6 +3,20 @@ from app.models.nfc_enlace import NfcEnlace
 from app.models.nfc_visita import NfcVisita
 from sqlalchemy import func
 from datetime import date, timedelta
+import uuid
+
+
+def create_nfc_enlace(db: Session, item_personalizado_id: str, url_destino: str):
+    short_code = str(uuid.uuid4())[:8].upper()
+    nfc_enlace = NfcEnlace(
+        item_personalizado_id=item_personalizado_id,
+        short_code=short_code,
+        url_destino_actual=url_destino
+    )
+    db.add(nfc_enlace)
+    db.commit()
+    db.refresh(nfc_enlace)
+    return nfc_enlace
 
 
 def get_nfc_by_item_id(db: Session, item_id: str):
