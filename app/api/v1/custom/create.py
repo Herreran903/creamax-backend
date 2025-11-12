@@ -3,6 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 
+import logging
+
 from app.schemas.custom import CustomCreateRequest, CustomCreateResponse, CotizacionRango, Desglose
 from app.db.session import get_db
 from app.crud.item_personalizado import create_item_personalizado
@@ -10,6 +12,9 @@ from app.crud.cotizacion import create_cotizacion
 from app.crud.nfc import create_nfc_enlace
 from app.services.cotizacion_service import estimate_price_from_params
 from app.models.modelo_catalogo import ModeloCatalogo
+from app.utils.slicing import download_3mf, run_prusaslicer_and_parse_metrics
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -39,10 +44,59 @@ def create_custom_quote(payload: CustomCreateRequest, db: Session = Depends(get_
         # no fallar: continuar
         pass
 
-    # 3) generar estimación
-    cot_min, cot_max, desglose_dict = estimate_price_from_params(payload.parametros.dict(), modelo_precio_base)
+    # 3) si modelo.url existe, intenta descargar, slice y extraer métricas
+    slicer_metrics = {}
+    tmp_files = []
+    try:
+        file_url = None
+        # new parameter: model_url inside payload.modelo
+        if payload.modelo and getattr(payload.modelo, "model_url", None):
+            file_url = str(payload.modelo.model_url)
 
-    # 4) persistir ItemPersonalizado (cotización se representa como item personalizado)
+        if file_url:
+            try:
+                model_3mf_path = download_3mf(file_url)
+                tmp_files.append(model_3mf_path)
+
+                # run prusaslicer and parse metrics (may raise HTTPException on errors)
+                slicer_metrics = run_prusaslicer_and_parse_metrics(model_3mf_path)
+                # attach profile name if present
+                slicer_metrics.setdefault("slicer_profile", slicer_metrics.get("slicer_profile") or None)
+            except HTTPException:
+                # re-raise HTTPExceptions (they are already formatted for response)
+                raise
+            except Exception as e:
+                logger.exception("Error during slicing flow: %s", e)
+                raise HTTPException(status_code=500, detail=f"Slicer/processing error: {e}")
+
+        # 4) merge parametros and slicer metrics for pricing function
+        merged_params = payload.parametros.dict()
+        # include safe subset under 'slicer_metrics' to avoid polluting service contract
+        if slicer_metrics:
+            merged_params["slicer_metrics"] = slicer_metrics
+
+        # 5) generar estimación
+        cot_min, cot_max, desglose_dict = estimate_price_from_params(merged_params)
+    finally:
+        # ensure temp cleanup
+        for p in tmp_files:
+            try:
+                import os
+                if os.path.exists(p):
+                    os.remove(p)
+            except Exception:
+                logger.warning("Failed to remove temp file %s", p)
+        # remove gcode produced by slicer if present
+        try:
+            gpath = slicer_metrics.get("raw_gcode_path") if isinstance(slicer_metrics, dict) else None
+            if gpath:
+                import os
+                if os.path.exists(gpath):
+                    os.remove(gpath)
+        except Exception:
+            logger.warning("Failed to remove gcode file %s", gpath)
+
+    # 6) persistir ItemPersonalizado (cotización se representa como item personalizado)
     parametros_json = payload.parametros.dict()
     item = create_item_personalizado(
         db=db,
@@ -51,7 +105,8 @@ def create_custom_quote(payload: CustomCreateRequest, db: Session = Depends(get_
         nombre_personalizado=payload.nombre_personalizado,
         parametros=payload.parametros.dict(),
         color=payload.parametros.color,
-        logo_url=None
+        logo_url=None,
+        model_url=(str(payload.modelo.model_url) if payload.modelo and getattr(payload.modelo, "model_url", None) else None)
     )
 
     cotizacion_data = {
@@ -69,7 +124,7 @@ def create_custom_quote(payload: CustomCreateRequest, db: Session = Depends(get_
 
     cotizacion_db = create_cotizacion(db=db, cotizacion=cotizacion_data)
 
-    # 5) Crear registro NFC si include_nfc es True
+    # 7) Crear registro NFC si include_nfc es True
     if payload.parametros.include_nfc and payload.parametros.nfc_url:
         create_nfc_enlace(
             db=db,

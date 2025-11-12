@@ -14,6 +14,7 @@ class ModeloCreate(BaseModel):
     modelo_id: Optional[str] = None 
     archivo: Optional[str] = None 
     url: Optional[HttpUrl] = None
+    model_url: Optional[HttpUrl] = None
     svg: Optional[str] = None
     textura_imagen: Optional[str] = None 
     parametros_generacion_ai: Optional[AIParams] = None

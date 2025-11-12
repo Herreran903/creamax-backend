@@ -12,6 +12,7 @@ class ItemPersonalizado(Base):
     nombre_personalizado = Column(String, nullable=False)
     color = Column(String, nullable=True)
     logo_url = Column(String, nullable=True)
+    model_url = Column(String, nullable=True)
     parametros = Column(JSON, nullable=True)
     fecha_creacion = Column(DateTime, default=datetime.utcnow)
 
