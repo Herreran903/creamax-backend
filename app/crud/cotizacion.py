@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from app.models.cotizacion import Cotizacion
+from app.models.pedido import Pedido
 from http.client import HTTPException
 
 def create_cotizacion(db: Session, cotizacion: dict):
@@ -13,3 +14,8 @@ def create_cotizacion(db: Session, cotizacion: dict):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+def get_all_cotizaciones(db: Session):
+    pedidos = db.query(Pedido).all()
+    return pedidos    
