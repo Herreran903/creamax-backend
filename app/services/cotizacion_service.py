@@ -1,6 +1,7 @@
 # app/services/cotizacion_service.py
 from datetime import datetime, timedelta
 from decimal import Decimal
+import math
 from typing import Tuple, Dict
 
 #TODO: se puso un placeholder de simulación de cotización. Se debe aplicar lógica real que se vaya a utilizar.
@@ -40,6 +41,9 @@ def estimate_price_from_params(parametros: dict) -> Tuple[float, float, Dict]:
         nfc_cost = 0
 
     unidad = subtotal + gastos_generales + nfc_cost
+
+    if parametros.get("fuente_modelo") == "ai":
+        unidad = math.random(2500, 4000)
 
     acabado = 0
 

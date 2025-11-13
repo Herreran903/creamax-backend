@@ -271,7 +271,7 @@ def run_prusaslicer_and_parse_metrics(model_3mf_path: str) -> Dict:
     cmd = [prusa_bin]
     if profile:
         cmd += ["--load", profile]
-    cmd += ["--export-gcode", "-o", gcode_path, model_3mf_path]
+    cmd += ["--export-gcode", "--merge", "-o", gcode_path, model_3mf_path]
 
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
