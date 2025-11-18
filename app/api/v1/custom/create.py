@@ -47,7 +47,9 @@ def create_custom_quote(payload: CustomCreateRequest, db: Session = Depends(get_
     # 3) si modelo.url existe, intenta descargar, slice y extraer métricas
     slicer_metrics = {}
     tmp_files = []
+    
     try:
+        '''
         file_url = None
         # new parameter: model_url inside payload.modelo
         if payload.modelo and getattr(payload.modelo, "model_url", None):
@@ -68,13 +70,13 @@ def create_custom_quote(payload: CustomCreateRequest, db: Session = Depends(get_
             except Exception as e:
                 logger.exception("Error during slicing flow: %s", e)
                 raise HTTPException(status_code=500, detail=f"Slicer/processing error: {e}")
-
+        '''
         # 4) merge parametros and slicer metrics for pricing function
         merged_params = payload.parametros.dict()
         # include safe subset under 'slicer_metrics' to avoid polluting service contract
         if slicer_metrics:
             merged_params["slicer_metrics"] = slicer_metrics
-
+        
         # 5) generar estimación
         cot_min, cot_max, desglose_dict = estimate_price_from_params(merged_params)
     finally:

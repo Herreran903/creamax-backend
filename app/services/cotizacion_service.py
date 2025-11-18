@@ -1,7 +1,7 @@
 # app/services/cotizacion_service.py
 from datetime import datetime, timedelta
 from decimal import Decimal
-import math
+import random
 from typing import Tuple, Dict
 
 #TODO: se puso un placeholder de simulación de cotización. Se debe aplicar lógica real que se vaya a utilizar.
@@ -17,6 +17,14 @@ def estimate_price_from_params(parametros: dict) -> Tuple[float, float, Dict]:
 
     # Simulación de cálculo de cotización basado en métricas
 
+    # Si falla conexión con laminador o no se obtienen métricas, usar valores de muestra basados en rangos típicos
+    
+    if material_cost == 0:
+        material_cost = round(random.uniform(500, 1000), 2)
+    
+    if print_time == 0:
+        print_time = round(random.uniform(0.34, 1.34), 2)
+    
     gasto_energía = print_time * 0.12  # consumo energético estimado
     costo_energía = gasto_energía * 600  # costo energético
     mantenimiento_impresora = print_time * 769  # mantenimiento de la impresora
@@ -42,13 +50,10 @@ def estimate_price_from_params(parametros: dict) -> Tuple[float, float, Dict]:
 
     unidad = subtotal + gastos_generales + nfc_cost
 
-    if parametros.get("fuente_modelo") == "ai":
-        unidad = math.random(2500, 4000)
-
     acabado = 0
 
-    cot_min = round(unidad * 2, 2)
-    cot_max = round(unidad * 2.5, 2)
+    cot_min = round(unidad * 1.5, 2)
+    cot_max = round(unidad * 2, 2)
 
     desglose = {
         "material": round(material_cost, 2),
