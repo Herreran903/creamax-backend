@@ -1,36 +1,34 @@
-# app/schemas/custom.py
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field, HttpUrl
 from datetime import datetime
 
 class AIParams(BaseModel):
-    prompt: str
-    semilla: Optional[int]
-    variacion: Optional[str]
-    motor: Optional[str]
-
-class ModeloInfo(BaseModel):
-    modelo_id: Optional[str]
-    archivo_id: Optional[str] = None
+    text_prompt: Optional[str] = None
+    prompt: Optional[str] = None
+    imagen_prompt: Optional[Dict[str, Any]] = None
+    semilla: Optional[int] = None
+    variacion: Optional[str] = None
+    motor: Optional[str] = None
+    
+class ModeloCreate(BaseModel):
+    modelo_id: Optional[str] = None 
+    archivo: Optional[str] = None 
     url: Optional[HttpUrl] = None
+    model_url: Optional[HttpUrl] = None
     svg: Optional[str] = None
-    textura_imagen_id: Optional[str] = None
+    textura_imagen: Optional[str] = None 
     parametros_generacion_ai: Optional[AIParams] = None
     thumbnail_url: Optional[HttpUrl] = None
+    precio_base: Optional[float] = None
 
-class ParametrosFabricacion(BaseModel):
-    material: str
-    color: Optional[str] = None
-    acabado: Optional[str] = None
-    dimension_unidad: Optional[str] = "mm"
+class ParametrosCreate(BaseModel):
+    color: Optional[List[str]] = None 
     alto: Optional[float] = None
     ancho: Optional[float] = None
     profundidad: Optional[float] = None
-    escala: Optional[float] = 1.0
-    cantidad: int = Field(..., gt=0)
-    complejidad_estimacion: Optional[str] = "media"
-    tolerancia: Optional[str] = "estandar"
-    espesor_minimo: Optional[float] = None
+    uv_map: Optional[Dict[str, Any]] = None
+    include_nfc: Optional[bool] = None
+    nfc_url: Optional[str] = None
 
 class Metadatos(BaseModel):
     app_version: Optional[str] = None
@@ -39,12 +37,12 @@ class Metadatos(BaseModel):
     referer: Optional[str] = None
 
 class CustomCreateRequest(BaseModel):
-    version: str = Field("1.0")
-    fuente_modelo: str
-    nombre_personalizado: str
-    usuario_id: Optional[str] = None
-    modelo: ModeloInfo
-    parametros: ParametrosFabricacion
+    version: str = Field("1.0", description="Versión del contrato de solicitud.")
+    fuente_modelo: str = Field(..., description="Origen del modelo: 'ai', '3d_upload', 'svg', 'texture_image'.")
+    nombre_personalizado: str = Field(..., max_length=30)
+    usuario_id: Optional[str] = None 
+    modelo: ModeloCreate
+    parametros: ParametrosCreate
     metadatos: Optional[Metadatos] = None
 
 class Desglose(BaseModel):

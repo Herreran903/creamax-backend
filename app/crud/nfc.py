@@ -1,0 +1,68 @@
+from sqlalchemy.orm import Session
+from app.models.nfc_enlace import NfcEnlace
+from app.models.nfc_visita import NfcVisita
+from sqlalchemy import func
+from datetime import date, timedelta
+import uuid
+
+
+def create_nfc_enlace(db: Session, item_personalizado_id: str, url_destino: str):
+    short_code = str(uuid.uuid4())[:8].upper()
+    nfc_enlace = NfcEnlace(
+        item_personalizado_id=item_personalizado_id,
+        short_code=short_code,
+        url_destino_actual=url_destino
+    )
+    db.add(nfc_enlace)
+    db.commit()
+    db.refresh(nfc_enlace)
+    return nfc_enlace
+
+def get_nfc_by_item_id(db: Session, item_id: str):
+    return db.query(NfcEnlace).filter(NfcEnlace.item_personalizado_id == item_id).first()
+
+def get_nfc_by_short_code(db: Session, short_code: str):
+    return db.query(NfcEnlace).filter(NfcEnlace.short_code == short_code).first()
+
+
+def update_nfc_url(db: Session, nfc: NfcEnlace, new_url: str):
+    nfc.url_destino_actual = str(new_url)
+    db.commit()
+    db.refresh(nfc)
+    return nfc
+
+
+def get_click_stats(db: Session, nfc_id: int):
+    # Últimos 7 días
+    seven_days_ago = date.today() - timedelta(days=6)
+
+    registros = (
+        db.query(NfcVisita.fecha_conteo, NfcVisita.conteo)
+        .filter(NfcVisita.nfc_enlace_id == nfc_id)
+        .filter(NfcVisita.fecha_conteo >= seven_days_ago)
+        .order_by(NfcVisita.fecha_conteo.asc())
+        .all()
+    )
+
+    return [{"dia": r.fecha_conteo, "clicks": r.conteo} for r in registros]
+
+
+def register_visit(db: Session, nfc_enlace_id: int):
+    """Registra una visita para el enlace NFC: incrementa el conteo del día actual o crea el registro."""
+    today = date.today()
+    visita = (
+        db.query(NfcVisita)
+        .filter(NfcVisita.nfc_enlace_id == nfc_enlace_id)
+        .filter(NfcVisita.fecha_conteo == today)
+        .first()
+    )
+
+    if visita:
+        visita.conteo = (visita.conteo or 0) + 1
+    else:
+        visita = NfcVisita(nfc_enlace_id=nfc_enlace_id, fecha_conteo=today, conteo=1)
+        db.add(visita)
+
+    db.commit()
+    db.refresh(visita)
+    return visita

@@ -9,7 +9,7 @@ class Cotizacion(Base):
     # Campos principales de identificación y relación
     id = Column(Integer, primary_key=True, index=True)
 
-    item_personalizado_id = Column(Integer, ForeignKey("item_personalizado.id"), nullable=False, unique=True)
+    item_personalizado_id = Column(String, ForeignKey("item_personalizado.id"), nullable=False, unique=True)
 
     nombre_personalizado = Column(String, nullable=False)
     fecha_creacion = Column(DateTime, default=datetime.utcnow, nullable=False)

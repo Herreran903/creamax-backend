@@ -11,7 +11,7 @@ from app.models.pedido import Pedido
 from app.crud.cliente import create_or_update_cliente
 from app.crud.pedido import create_pedido_from_cotizacion
 
-router = APIRouter(prefix="/api/v1/custom", tags=["custom"])
+router = APIRouter()
 
 
 FIXED_MESSAGE = "Pedido recibido. El precio final será confirmado manualmente por correo."
@@ -42,6 +42,10 @@ def create_custom_confirmation(payload: ConfirmationRequest, db: Session = Depen
         cliente_id=cliente.id,
         cantidad=payload.cantidad if payload.cantidad else 1
     )
+
+    print("DEBUG item_personalizado_id =", cotizacion.item_personalizado_id, type(cotizacion.item_personalizado_id))
+
+
 
     # 4) Respuesta final al frontend
     return ConfirmationResponse(
